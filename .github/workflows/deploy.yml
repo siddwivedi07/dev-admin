@@ -1,8 +1,8 @@
-name: Selenium Automation CI/CD Pipeline
+name: DAMS Selenium Automation CI/CD
 
 on:
   push:
-    branches:  
+    branches:
       - main
       - master
   pull_request:
@@ -12,12 +12,12 @@ on:
   workflow_dispatch:
     inputs:
       test_scope:
-        description: 'Package or Class to run (leave "all" to run everything)'
+        description: 'Test class to run (leave blank to run all)'
         required: false
         default: 'all'
         type: string
       browser:
-        description: 'Browser to run tests on (chrome, firefox, edge)'
+        description: 'Browser'
         required: false
         default: 'chrome'
         type: choice
@@ -26,7 +26,7 @@ on:
           - firefox
           - edge
       environment:
-        description: 'Test Environment (QA, STAGING, PROD)'
+        description: 'Test Environment'
         required: false
         default: 'QA'
         type: choice
@@ -37,45 +37,77 @@ on:
 
 env:
   TEST_ENV: ${{ inputs.environment || 'QA' }}
-  BROWSER: ${{ inputs.browser || 'chrome' }}
+  BROWSER:  ${{ inputs.browser  || 'chrome' }}
 
 jobs:
   automation-tests:
-    name: Run Admin Panel Tests
+    name: Run DAMS Admin Panel Tests
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Source Code
         uses: actions/checkout@v4
 
-      - name: Set up Java JDK (LTS)
+      - name: Set up Java 21 (Temurin)
         uses: actions/setup-java@v4
         with:
           java-version: '21'
           distribution: 'temurin'
           cache: maven
 
-      - name: Build Project & Resolve Dependencies
+      - name: Install Google Chrome (stable)
+        run: |
+          wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
+          echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" \
+            | sudo tee /etc/apt/sources.list.d/google-chrome.list
+          sudo apt-get update -q
+          sudo apt-get install -y google-chrome-stable
+
+      - name: Build & Resolve Dependencies
         run: mvn clean compile -B
 
       - name: Execute Selenium Tests
         env:
           ADMIN_USERNAME: ${{ secrets.ADMIN_USERNAME }}
           ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
-          BASE_URL: ${{ secrets.BASE_URL }}
+          ADMIN_OTP:      ${{ secrets.ADMIN_OTP }}
+          BASE_URL:       ${{ secrets.BASE_URL }}
         run: |
-          BASE_MAVEN_CMD="mvn test -B -Dsurefire.rerunFailingTestsCount=2 -Dbrowser=$BROWSER -Denv=$TEST_ENV -DfailIfNoTests=false"
-          
+          BASE_CMD="mvn test -B \
+            -Dsurefire.rerunFailingTestsCount=2 \
+            -Dbrowser=$BROWSER \
+            -Denv=$TEST_ENV \
+            -DfailIfNoTests=false"
+
           if [ "${{ inputs.test_scope }}" == "all" ] || [ -z "${{ inputs.test_scope }}" ]; then
-            eval "$BASE_MAVEN_CMD"
+            eval "$BASE_CMD"
           else
-            eval "$BASE_MAVEN_CMD -Dtest=${{ inputs.test_scope }}"
+            eval "$BASE_CMD -Dtest=${{ inputs.test_scope }}"
           fi
 
-      - name: Upload Surefire Test Reports
-        if: always() 
+      # ── Upload custom pixel-perfect HTML report ──────────────────────────
+      - name: Upload DAMS Custom HTML Report
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: surefire-test-report-${{ github.run_number }}
+          name: DAMS-Custom-Report-${{ github.run_number }}
+          path: target/Custom-Reports/
+          retention-days: 30
+
+      # ── Upload Extent (Spark) report + screenshots ────────────────────────
+      - name: Upload Extent Spark Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: DAMS-Extent-Report-${{ github.run_number }}
+          path: target/Extent-Reports/
+          retention-days: 30
+
+      # ── Upload raw Surefire XML (optional, useful for test trend plugins) ─
+      - name: Upload Surefire XML Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Surefire-XML-${{ github.run_number }}
           path: target/surefire-reports/
           retention-days: 14
