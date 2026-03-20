@@ -1,0 +1,81 @@
+name: Selenium Automation CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+    inputs:
+      test_scope:
+        description: 'Package or Class to run (leave "all" to run everything)'
+        required: false
+        default: 'all'
+        type: string
+      browser:
+        description: 'Browser to run tests on (chrome, firefox, edge)'
+        required: false
+        default: 'chrome'
+        type: choice
+        options:
+          - chrome
+          - firefox
+          - edge
+      environment:
+        description: 'Test Environment (QA, STAGING, PROD)'
+        required: false
+        default: 'QA'
+        type: choice
+        options:
+          - QA
+          - STAGING
+          - PROD
+
+env:
+  TEST_ENV: ${{ inputs.environment || 'QA' }}
+  BROWSER: ${{ inputs.browser || 'chrome' }}
+
+jobs:
+  automation-tests:
+    name: Run Admin Panel Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up Java JDK (LTS)
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Build Project & Resolve Dependencies
+        run: mvn clean compile -B
+
+      - name: Execute Selenium Tests
+        env:
+          ADMIN_USERNAME: ${{ secrets.ADMIN_USERNAME }}
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+          BASE_URL: ${{ secrets.BASE_URL }}
+        run: |
+          BASE_MAVEN_CMD="mvn test -B -Dsurefire.rerunFailingTestsCount=2 -Dbrowser=$BROWSER -Denv=$TEST_ENV -DfailIfNoTests=false"
+          
+          if [ "${{ inputs.test_scope }}" == "all" ] || [ -z "${{ inputs.test_scope }}" ]; then
+            eval "$BASE_MAVEN_CMD"
+          else
+            eval "$BASE_MAVEN_CMD -Dtest=${{ inputs.test_scope }}"
+          fi
+
+      - name: Upload Surefire Test Reports
+        if: always() 
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-test-report-${{ github.run_number }}
+          path: target/surefire-reports/
+          retention-days: 14
