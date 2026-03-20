@@ -2,7 +2,7 @@ name: Selenium Automation CI/CD Pipeline
 
 on:
   push:
-    branches:
+    branches:  
       - main
       - master
   pull_request:
