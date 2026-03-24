@@ -1,6 +1,6 @@
 name: DAMS Selenium Automation CI/CD
 
-on:
+on: 
   push:
     branches:
       - main
