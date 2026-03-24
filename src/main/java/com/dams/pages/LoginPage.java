@@ -40,7 +40,7 @@ public class LoginPage {
         driver.findElement(passwordInput).sendKeys(password);
         com.dams.report.CustomHtmlReporter.logStep("TC_2", "Login", "STEP 2 - Enter Password", "PASS", "-");
         
-        // Step 3: Click Login 
+        // Step 3: Click Login
         driver.findElement(submitBtn).click();
         com.dams.report.CustomHtmlReporter.logStep("TC_3", "Login", "STEP 3 - Click Login Button", "PASS", "-");
         
