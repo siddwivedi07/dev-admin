@@ -15,6 +15,6 @@ public class DashboardTest extends BaseTest {
         // Assert that the URL contains devadmin or dashboard, confirming we moved past the login page
         Assert.assertTrue(driver.getCurrentUrl().contains("devadmin"), "We should be on the dashboard page of devadmin");
         
-        com.dams.report.CustomHtmlReporter.logStep("TC_6", "Execution", "adminLoginTest", "PASS", "-");
+        com.dams.report.CustomHtmlReporter.logStep("Dashboard Module", "TC_6", "Execution", "adminLoginTest", "PASS", "-");
     }
 }
