@@ -13,28 +13,26 @@ public class ExtentManager {
 
     public static ExtentReports getReporter() {
         if (extentReports == null) {
-            String timestamp  = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
+            String timestamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
+            String reportPath = System.getProperty("user.dir") + File.separator + "target" + File.separator 
+                                + "Extent-Reports" + File.separator + "Admin-Test-Report-" + timestamp + ".html";
+            
+            // Ensures the directory exists
+            new File(System.getProperty("user.dir") + File.separator + "target" + File.separator + "Extent-Reports").mkdirs();
 
-            // target/Extent-Reports/ is uploaded as the "DAMS-Extent-Report" GitHub Actions artifact
-            String reportDir  = System.getProperty("user.dir") + File.separator
-                                + "target" + File.separator + "Extent-Reports";
-            String reportPath = reportDir + File.separator
-                                + "DAMS_Extent_Report_" + timestamp + ".html";
-
-            new File(reportDir).mkdirs();
-
-            ExtentSparkReporter spark = new ExtentSparkReporter(reportPath);
-            spark.config().setDocumentTitle("DAMS Admin Automation Report");
-            spark.config().setReportName("DAMS Dashboard UI Tests");
-            spark.config().setTheme(Theme.DARK);
+            ExtentSparkReporter sparkReporter = new ExtentSparkReporter(reportPath);
+            sparkReporter.config().setDocumentTitle("DAMS Admin Automation Report");
+            sparkReporter.config().setReportName("DAMS Dashboard UI Tests");
+            sparkReporter.config().setTheme(Theme.DARK);
 
             extentReports = new ExtentReports();
-            extentReports.attachReporter(spark);
-
+            extentReports.attachReporter(sparkReporter);
+            
+            // Add custom system information
             extentReports.setSystemInfo("Application", "DAMS Admin Panel");
-            extentReports.setSystemInfo("OS",          System.getProperty("os.name"));
+            extentReports.setSystemInfo("Operating System", System.getProperty("os.name"));
             extentReports.setSystemInfo("Environment", System.getProperty("env", "QA"));
-            extentReports.setSystemInfo("Browser",     System.getProperty("browser", "Chrome"));
+            extentReports.setSystemInfo("Browser", System.getProperty("browser", "Chrome"));
         }
         return extentReports;
     }
