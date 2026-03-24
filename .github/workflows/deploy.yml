@@ -1,84 +1,42 @@
-name: Selenium Automation CI/CD Pipeline
+name: DAMS Selenium CI/CD
 
 on:
   push:
-    branches:
-      - main
-      - master
+    branches: [main]
   pull_request:
-    branches:
-      - main
-      - master
+    branches: [main]
   workflow_dispatch:
     inputs:
       test_scope:
-        description: 'Package or Class to run (leave "all" to run everything)'
-        required: false
+        description: 'Test class (blank = all)'
         default: 'all'
-        type: string
-      browser:
-        description: 'Browser to run tests on (chrome, firefox, edge)'
-        required: false
-        default: 'chrome'
-        type: choice
-        options:
-          - chrome
-          - firefox
-          - edge
-      environment:
-        description: 'Test Environment (QA, STAGING, PROD)'
-        required: false
-        default: 'QA'
-        type: choice
-        options:
-          - QA
-          - STAGING
-          - PROD
-
-env:
-  TEST_ENV: ${{ inputs.environment || 'QA' }}
-  BROWSER: ${{ inputs.browser || 'chrome' }}
 
 jobs:
-  automation-tests:
-    name: Run Admin Panel Tests
+  test:
     runs-on: ubuntu-latest
-
+    env:
+      ADMIN_USERNAME: ${{ secrets.ADMIN_USERNAME }}
+      ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+      ADMIN_OTP:      ${{ secrets.ADMIN_OTP }}
+      BASE_URL:       ${{ secrets.BASE_URL }}
     steps:
-      - name: Checkout Source Code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up Java JDK (LTS)
-        uses: actions/setup-java@v4
+      - uses: actions/setup-java@v4
         with:
           java-version: '21'
           distribution: 'temurin'
           cache: maven
 
-      - name: Build Project & Resolve Dependencies
-        run: mvn clean compile -B
+      - run: mvn clean test -B -DfailIfNoTests=false -Dsurefire.rerunFailingTestsCount=2
 
-      - name: Execute Selenium Tests
-        env:
-          ADMIN_USERNAME: ${{ secrets.ADMIN_USERNAME }}
-          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
-          BASE_URL: ${{ secrets.BASE_URL }}
-        run: |
-          BASE_MAVEN_CMD="mvn test -B -Dsurefire.rerunFailingTestsCount=2 -Dbrowser=$BROWSER -Denv=$TEST_ENV -DfailIfNoTests=false"
-          
-          if [ "${{ inputs.test_scope }}" == "all" ] || [ -z "${{ inputs.test_scope }}" ]; then
-            eval "$BASE_MAVEN_CMD"
-          else
-            eval "$BASE_MAVEN_CMD -Dtest=${{ inputs.test_scope }}"
-          fi
-
-      - name: Upload All Test Reports
-        if: always() 
+      - name: Upload Reports
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: all-test-reports-${{ github.run_number }}
+          name: DAMS-Reports-${{ github.run_number }}
           path: |
-            target/surefire-reports/
-            target/Extent-Reports/
             target/Custom-Reports/
-          retention-days: 14
+            target/Extent-Reports/
+            target/surefire-reports/
+          retention-days: 30
