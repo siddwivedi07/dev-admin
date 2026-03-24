@@ -5,7 +5,7 @@ import java.io.FileWriter;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
+import java.util.List; 
 
 /**
  * CustomHtmlReporter – generates the DAMS pixel-perfect Selenium HTML report.
