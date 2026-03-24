@@ -3,8 +3,8 @@ package com.dams.base;
 import com.dams.driver.DriverFactory;
 import com.dams.pages.LoginPage;
 import org.openqa.selenium.WebDriver;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod; 
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Listeners;
 
 @Listeners(com.dams.report.ExtentListener.class)
@@ -17,26 +17,30 @@ public class BaseTest {
         com.dams.report.CustomHtmlReporter.initializeReport();
     }
 
-    @BeforeMethod
+    @BeforeClass
     public void setUp() {
-        // Read credentials from GitHub Secrets (injected as environment variables)
-        String baseUrl  = System.getenv("BASE_URL")       != null ? System.getenv("BASE_URL")       : "https://devadmin.damsdelhi.com/";
-        String username = System.getenv("ADMIN_USERNAME")  != null ? System.getenv("ADMIN_USERNAME")  : "07siddwivedi@gmail.com";
-        String password = System.getenv("ADMIN_PASSWORD")  != null ? System.getenv("ADMIN_PASSWORD")  : "Siddarth@123";
-        String otp      = System.getenv("ADMIN_OTP")       != null ? System.getenv("ADMIN_OTP")       : "1980";
-
+        // Initialize the browser
         driver = DriverFactory.initDriver();
-        System.out.println("Navigating to: " + baseUrl);
-        driver.get(baseUrl);
-        com.dams.report.CustomHtmlReporter.logStep("TC_0", "Init", "STEP 1 – Open Application URL", "PASS", "-");
-
+        System.out.println("Navigating to https://devadmin.damsdelhi.com/");
+        driver.get("https://devadmin.damsdelhi.com/");
+        com.dams.report.CustomHtmlReporter.logStep("Login Phase", "TC_0", "Init", "STEP 1 - Open Dashboard", "PASS", "-");
+        
+        // Initialize the Page Objects
         loginPage = new LoginPage(driver);
-        loginPage.login(username, password, otp);
-
-        try { Thread.sleep(3000); } catch (InterruptedException e) { e.printStackTrace(); }
+        
+        // Execute the login flow (happens before every test inheriting BaseTest)
+        loginPage.login("07siddwivedi@gmail.com", "Siddarth@123", "1980");
+        
+        // Pause for 1 minute (60,000 milliseconds) as requested to allow heavy dashboard elements to become visible
+        System.out.println("Login completed. Waiting 1 minute for dashboard to fully render...");
+        try {
+            Thread.sleep(60000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
-    @AfterMethod
+    @AfterClass
     public void tearDown() {
         DriverFactory.quitDriver();
     }
