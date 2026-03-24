@@ -36,7 +36,7 @@ public class ExtentListener implements ITestListener {
         } catch (Exception e) {
             System.out.println("Failed to attach screenshot to report: " + e.getMessage());
         }
-    } 
+    }
 
     @Override
     public void onTestSkipped(ITestResult result) {
