@@ -34,24 +34,24 @@ public class LoginPage {
         
         // Step 2: Enter Email
         wait.until(ExpectedConditions.visibilityOfElementLocated(emailInput)).sendKeys(email);
-        com.dams.report.CustomHtmlReporter.logStep("TC_1", "Login", "STEP 2 - Enter Email", "PASS", "-");
+        com.dams.report.CustomHtmlReporter.logStep("Login Module", "TC_1", "Login", "STEP 2 - Enter Email", "PASS", "-");
         
         // Step 2: Enter Password
         driver.findElement(passwordInput).sendKeys(password);
-        com.dams.report.CustomHtmlReporter.logStep("TC_2", "Login", "STEP 2 - Enter Password", "PASS", "-");
+        com.dams.report.CustomHtmlReporter.logStep("Login Module", "TC_2", "Login", "STEP 2 - Enter Password", "PASS", "-");
         
         // Step 3: Click Login
         driver.findElement(submitBtn).click();
-        com.dams.report.CustomHtmlReporter.logStep("TC_3", "Login", "STEP 3 - Click Login Button", "PASS", "-");
+        com.dams.report.CustomHtmlReporter.logStep("Login Module", "TC_3", "Login", "STEP 3 - Click Login Button", "PASS", "-");
         
         // Step 4: Enter OTP
         if (otp != null && otp.length() >= 4) {
             wait.until(ExpectedConditions.visibilityOfElementLocated(otpChar1)).sendKeys(otp);
-            com.dams.report.CustomHtmlReporter.logStep("TC_4", "Login", "STEP 4 - Enter OTP", "PASS", "-");
+            com.dams.report.CustomHtmlReporter.logStep("Login Module", "TC_4", "Login", "STEP 4 - Enter OTP", "PASS", "-");
             
             // Step 5: Click Submit/Verify OTP
             driver.findElement(verifyOtpBtn).click();
-            com.dams.report.CustomHtmlReporter.logStep("TC_5", "Login", "STEP 5 - Click OTP Submit", "PASS", "-");
+            com.dams.report.CustomHtmlReporter.logStep("Login Module", "TC_5", "Login", "STEP 5 - Click OTP Submit", "PASS", "-");
         }
     }
 }
